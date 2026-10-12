@@ -4,6 +4,7 @@
 
 #include "imu_sim.h"
 
+// Bus to forward IMU data to datalogger
 ZBUS_CHAN_DEFINE(
 	imu_zbus,
 	struct imu_data,
@@ -13,8 +14,10 @@ ZBUS_CHAN_DEFINE(
 	ZBUS_MSG_INIT(0)
 );
 
+// Simulate IMU fifo with a queue
 K_MSGQ_DEFINE(imu_fifo, sizeof(struct imu_sample), IMU_FIFO_DEPTH, 1);
 
+// Simulate watermark interrupt with a semaphore
 static K_SEM_DEFINE(watermark_sem, 0, 1);
 static atomic_t started;
 
@@ -83,10 +86,6 @@ int imu_sim_push_sample(const struct imu_sample *sample)
 
 void imu_thread(void *p1, void *p2, void *p3)
 {
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
-
 	while (1) {
 		k_sem_take(&watermark_sem, K_FOREVER);
 

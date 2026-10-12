@@ -17,10 +17,6 @@ int sim_init(void)
 
 void sim_wakeup_thread(void *p1, void *p2, void *p3)
 {
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
-
 	k_sleep(K_SECONDS(1));
 
 	while (1) {
@@ -35,10 +31,6 @@ void sim_wakeup_thread(void *p1, void *p2, void *p3)
 void sim_imu_thread(void *p1, void *p2, void *p3)
 {
 	uint8_t next_x = 0;
-
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
 
 	while (1) {
 		struct imu_sample sample;

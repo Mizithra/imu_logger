@@ -13,6 +13,7 @@
 #define PRIO_FLASH 6
 #define PRIO_SIM 7
 
+// Create thread stacks
 static K_THREAD_STACK_DEFINE(datalogger_stack, APP_STACK_SIZE);
 static K_THREAD_STACK_DEFINE(imu_stack, APP_STACK_SIZE);
 static K_THREAD_STACK_DEFINE(ble_stack, APP_STACK_SIZE);
@@ -27,6 +28,7 @@ static struct k_thread flash_thread_data;
 static struct k_thread sim_imu_thread_data;
 static struct k_thread sim_wakeup_thread_data;
 
+// Create thread and name it
 static void spawn(struct k_thread *thread, k_thread_stack_t *stack,
 		  size_t stack_size, k_thread_entry_t entry, int priority,
 		  const char *name)
@@ -37,12 +39,14 @@ static void spawn(struct k_thread *thread, k_thread_stack_t *stack,
 	k_thread_name_set(tid, name);
 }
 
+// Initialize peripherals and launch threads
 int main(void)
 {
 	int ret;
 
 	printk("*** Booting Zephyr OS on native_sim ***\n");
 
+	// Check peirpherals can be initialized without errors
 	ret = datalogger_init();
 	if (ret < 0) {
 		printk("datalogger_init failed (%d)\n", ret);
@@ -67,6 +71,7 @@ int main(void)
 		return ret;
 	}
 
+	// Create each thread for each peripheral
 	spawn(&datalogger_thread_data, datalogger_stack,
 	      K_THREAD_STACK_SIZEOF(datalogger_stack),
 	      datalogger_thread, PRIO_DATALOGGER, "datalogger");

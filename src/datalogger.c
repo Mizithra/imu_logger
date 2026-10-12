@@ -30,7 +30,6 @@ ZBUS_CHAN_DEFINE(
 
 static void inactivity_timer_callback(struct k_timer *timer)
 {
-	ARG_UNUSED(timer);
 	k_sem_give(&inactivity_sem);
 }
 
@@ -39,17 +38,12 @@ K_TIMER_DEFINE(inactivity_timer, inactivity_timer_callback, NULL);
 static void button_pressed_callback(const struct device *dev,
 				    struct gpio_callback *cb, uint32_t pins)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(cb);
-	ARG_UNUSED(pins);
 	k_sem_give(&wakeup_sem);
 }
 
 // black box algorithim
 static bool detect_motion(const struct imu_data *data)
 {
-	ARG_UNUSED(data);
-
 	/* Replace with the assessment's black-box classifier. */
 	return sim_batch_count++ < SIM_MOTION_BATCHES;
 }
@@ -155,14 +149,6 @@ static bool inactivity_timeout_reached(bool *inactivity_pending,
 		return false;
 	}
 
-	/* Drain queued batches before sleeping in case motion resumed. */
-	while (zbus_sub_wait_msg(&logger_sub, &chan, &batch, K_NO_WAIT) == 0) {
-		if (process_batch(&batch, inactivity_pending,
-				  have_motion_state, last_motion)) {
-			motion_seen = true;
-		}
-	}
-
 	return *inactivity_pending && !motion_seen;
 }
 
@@ -190,6 +176,7 @@ static void run_active(void)
 		if (err == 0) {
 			process_batch(&batch, &inactivity_pending,
 						&have_motion_state, &last_motion);
+						
 		} else if (err != -ENOMSG && err != -EAGAIN) {
 			printk("[Datalogger] IMU message wait failed (%d)\n", err);
 		}
@@ -220,9 +207,6 @@ static void enter_sleep(void)
 
 void datalogger_thread(void *p1, void *p2, void *p3)
 {
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
 
 	while (1) {
 		printk("[Datalogger] Sleeping; waiting for wakeup\n");

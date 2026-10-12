@@ -14,6 +14,7 @@ K_MUTEX_DEFINE(records_mutex);
 ZBUS_MSG_SUBSCRIBER_DEFINE(flash_sub);
 ZBUS_CHAN_ADD_OBS(motion_zbus, flash_sub, 3);
 
+// Convert Flash Event ENUM into Text String
 static const char *event_name(enum flash_event event)
 {
 	switch (event) {
@@ -36,6 +37,7 @@ int flash_sim_init(void)
 	return 0;
 }
 
+// Store record in flash
 static int store_record(struct flash_record *record)
 {
 	int err = 0;
@@ -55,6 +57,7 @@ static int store_record(struct flash_record *record)
 	return err;
 }
 
+// Simulate logging to flash
 int flash_sim_log_event(enum flash_event event)
 {
 	struct flash_record record = {
@@ -115,10 +118,7 @@ void flash_thread(void *p1, void *p2, void *p3)
 {
 	const struct zbus_channel *chan;
 
-	ARG_UNUSED(p1);
-	ARG_UNUSED(p2);
-	ARG_UNUSED(p3);
-
+	// Wait for motion data zbus message
 	while (1) {
 		struct motion_msg msg;
 		int err = zbus_sub_wait_msg(&flash_sub, &chan, &msg, K_FOREVER);
@@ -128,6 +128,7 @@ void flash_thread(void *p1, void *p2, void *p3)
 			continue;
 		}
 
+		// Depending on message recieved,
 		switch (msg.type) {
 		case MOTION_MSG_WAKE:
 			flash_sim_log_event(FLASH_EVT_WAKEUP);
