@@ -1,0 +1,29 @@
+# Copyright (c) 2021 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+#
+# This file is the application Kconfig entry point. All application Kconfig
+# options can be defined here or included via other application Kconfig files.
+# You can browse these options using the west targets menuconfig (terminal) or
+# guiconfig (GUI).
+
+menu "Zephyr"
+source "Kconfig.zephyr"
+endmenu
+
+module = APP
+module-str = APP
+source "subsys/logging/Kconfig.template.log_config"
+
+
+config MAIN_SLEEP_MS
+	int "Main Loop Sleep"
+	default 100
+
+config APP_IMU_ODR_HZ
+	int "IMU output data rate (Hz)"
+	default 100
+
+config APP_IMU_FIFO_WATERMARK
+	int "IMU FIFO watermark (samples)"
+	range 1 128
+	default 32

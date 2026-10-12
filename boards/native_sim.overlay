@@ -1,0 +1,19 @@
+/*
+ * Copyright (c) 2021 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+    aliases {
+        sw0 = &wakeup_button;
+    };
+
+    buttons {
+        compatible = "gpio-keys";
+        wakeup_button: button_0 {
+            /* Keep &gpio0 (the label) — it internally routes to gpio_emul */
+            gpios = <&gpio0 5 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+            label = "Virtual Wakeup Button";
+        };
+    };
+};
