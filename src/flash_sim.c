@@ -128,7 +128,6 @@ void flash_thread(void *p1, void *p2, void *p3)
 			continue;
 		}
 
-		// Depending on message recieved,
 		switch (msg.type) {
 		case MOTION_MSG_WAKE:
 			flash_sim_log_event(FLASH_EVT_WAKEUP);

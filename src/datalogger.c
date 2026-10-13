@@ -48,7 +48,7 @@ static bool detect_motion(const struct imu_data *data)
 	return sim_batch_count++ < SIM_MOTION_BATCHES;
 }
 
-// Publish message to 
+// Publish a message on the motion bus
 static int publish_message(enum motion_msg_type type, bool motion,
 			   const struct imu_data *data)
 {
@@ -97,52 +97,11 @@ int datalogger_init(void)
 	return gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_FALLING);
 }
 
-static bool process_batch(struct imu_data *batch, bool *inactivity_pending,
-			  bool *have_motion_state, bool *last_motion)
-{
-	bool motion;
-	int err;
-
-	if (batch->count > IMU_BATCH_SIZE) {
-		printk("[Datalogger] Invalid sample count %u; clamping\n",
-		       batch->count);
-		batch->count = IMU_BATCH_SIZE;
-	}
-
-	motion = detect_motion(batch);
-
-	if (!*have_motion_state || motion != *last_motion) {
-		publish_event(motion ? MOTION_MSG_MOTION_DETECTED :
-				      MOTION_MSG_NO_MOTION_DETECTED);
-		*have_motion_state = true;
-		*last_motion = motion;
-	}
-
-	err = publish_message(MOTION_MSG_BATCH, motion, batch);
-	if (err) {
-		printk("[Datalogger] Batch publish failed (%d)\n", err);
-	}
-
-	if (motion) {
-		k_timer_stop(&inactivity_timer);
-		k_sem_reset(&inactivity_sem);
-		*inactivity_pending = false;
-	} else if (!*inactivity_pending) {
-		k_sem_reset(&inactivity_sem);
-		k_timer_start(&inactivity_timer, INACTIVITY_TIMEOUT, K_NO_WAIT);
-		*inactivity_pending = true;
-	}
-
-	return motion;
-}
-
 
 static bool inactivity_timeout_reached(bool *inactivity_pending,
 				       bool *have_motion_state,
 				       bool *last_motion)
 {
-	const struct zbus_channel *chan;
-	struct imu_data batch;
 	bool motion_seen = false;
 
 	if (k_sem_take(&inactivity_sem, K_NO_WAIT) != 0) {
@@ -170,13 +129,46 @@ static void run_active(void)
 
 	while (1) {
 		struct imu_data batch;
-		int err = zbus_sub_wait_msg(&logger_sub, &chan, &batch,
-					    K_MSEC(50));
-
+		int err = zbus_sub_wait_msg(&logger_sub, &chan, &batch, K_MSEC(50));
 		if (err == 0) {
-			process_batch(&batch, &inactivity_pending,
-						&have_motion_state, &last_motion);
-						
+			bool motion;
+
+			if (batch.count > IMU_BATCH_SIZE) {
+				printk("[Datalogger] Invalid sample count %u; clamping\n",
+				       batch.count);
+				batch.count = IMU_BATCH_SIZE;
+			}
+
+			// Blackbox algorithim to determine motion
+			motion = detect_motion(&batch);
+
+			// Only log motion state transitions, not every batch's motion
+			if (!have_motion_state || motion != last_motion) {
+				publish_event(motion ? MOTION_MSG_MOTION_DETECTED :
+						       MOTION_MSG_NO_MOTION_DETECTED);
+				have_motion_state = true;
+				last_motion = motion;
+			}
+
+			// Motion cancels the inactivity timer. The first no-motion
+			// batch after motion starts it; later ones leave it running.
+			if (motion) {
+				// Stop and reset the inactivity status
+				k_timer_stop(&inactivity_timer);
+				k_sem_reset(&inactivity_sem); // Prevent race condition
+				inactivity_pending = false;
+
+				// Publish batch to BLE and Flash if motion is detected.
+				err = publish_message(MOTION_MSG_BATCH, motion, &batch);
+				if (err) {
+					printk("[Datalogger] Batch publish failed (%d)\n", err);
+				}
+			} else if (!inactivity_pending) {
+				k_sem_reset(&inactivity_sem); // Prevent race condition
+				k_timer_start(&inactivity_timer, INACTIVITY_TIMEOUT,
+					      K_NO_WAIT);
+				inactivity_pending = true;
+			}
 		} else if (err != -ENOMSG && err != -EAGAIN) {
 			printk("[Datalogger] IMU message wait failed (%d)\n", err);
 		}
