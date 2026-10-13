@@ -102,13 +102,12 @@ static bool inactivity_timeout_reached(bool *inactivity_pending,
 				       bool *have_motion_state,
 				       bool *last_motion)
 {
-	bool motion_seen = false;
 
 	if (k_sem_take(&inactivity_sem, K_NO_WAIT) != 0) {
 		return false;
 	}
 
-	return *inactivity_pending && !motion_seen;
+	return *inactivity_pending;
 }
 
 static void run_active(void)
