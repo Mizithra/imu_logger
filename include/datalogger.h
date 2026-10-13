@@ -15,6 +15,7 @@ enum motion_msg_type {
 
 struct motion_msg {
 	enum motion_msg_type type;
+	uint32_t timestamp_ms;
 	bool motion;
 	struct imu_data data;
 };

@@ -46,7 +46,6 @@ static int store_record(struct flash_record *record)
 	if (record_count >= FLASH_RECORD_CAPACITY) {
 		err = -ENOSPC;
 	} else {
-		record->timestamp_ms = k_uptime_get_32();
 		records[record_count++] = *record;
 	}
 	k_mutex_unlock(&records_mutex);
@@ -58,9 +57,10 @@ static int store_record(struct flash_record *record)
 }
 
 // Simulate logging to flash
-int flash_sim_log_event(enum flash_event event)
+int flash_sim_log_event(enum flash_event event, uint32_t timestamp_ms)
 {
 	struct flash_record record = {
+		.timestamp_ms = timestamp_ms,
 		.type = FLASH_RECORD_EVENT,
 		.event = event,
 	};
@@ -78,9 +78,10 @@ int flash_sim_log_event(enum flash_event event)
 	return err;
 }
 
-int flash_sim_append(const struct imu_data *data)
+int flash_sim_append(const struct imu_data *data, uint32_t timestamp_ms)
 {
 	struct flash_record record = {
+		.timestamp_ms = timestamp_ms,
 		.type = FLASH_RECORD_IMU,
 	};
 
@@ -130,21 +131,21 @@ void flash_thread(void *p1, void *p2, void *p3)
 
 		switch (msg.type) {
 		case MOTION_MSG_WAKE:
-			flash_sim_log_event(FLASH_EVT_WAKEUP);
+			flash_sim_log_event(FLASH_EVT_WAKEUP,  msg.timestamp_ms);
 			break;
 		case MOTION_MSG_MOTION_DETECTED:
-			flash_sim_log_event(FLASH_EVT_MOTION_DETECTED);
+			flash_sim_log_event(FLASH_EVT_MOTION_DETECTED,  msg.timestamp_ms);
 			break;
 		case MOTION_MSG_NO_MOTION_DETECTED:
-			flash_sim_log_event(FLASH_EVT_NO_MOTION_DETECTED);
+			flash_sim_log_event(FLASH_EVT_NO_MOTION_DETECTED,  msg.timestamp_ms);
 			break;
 		case MOTION_MSG_BATCH:
 			if (msg.motion) {
-				flash_sim_append(&msg.data);
+				flash_sim_append(&msg.data,  msg.timestamp_ms);
 			}
 			break;
 		case MOTION_MSG_SLEEP:
-			flash_sim_log_event(FLASH_EVT_SLEEP);
+			flash_sim_log_event(FLASH_EVT_SLEEP,  msg.timestamp_ms);
 			break;
 		default:
 			break;

@@ -18,12 +18,3 @@ source "subsys/logging/Kconfig.template.log_config"
 config MAIN_SLEEP_MS
 	int "Main Loop Sleep"
 	default 100
-
-config APP_IMU_ODR_HZ
-	int "IMU output data rate (Hz)"
-	default 100
-
-config APP_IMU_FIFO_WATERMARK
-	int "IMU FIFO watermark (samples)"
-	range 1 128
-	default 32

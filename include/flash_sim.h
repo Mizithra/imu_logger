@@ -23,7 +23,7 @@ struct flash_record {
 };
 
 int flash_sim_init(void);
-int flash_sim_append(const struct imu_data *data);
-int flash_sim_log_event(enum flash_event event);
+int flash_sim_append(const struct imu_data *data, uint32_t timestamp_ms);
+int flash_sim_log_event(enum flash_event event, uint32_t timestamp_ms);
 int flash_sim_read(uint16_t index, struct flash_record *record);
 void flash_thread(void *p1, void *p2, void *p3);

@@ -4,6 +4,8 @@ A motion-triggered IMU datalogger built with Zephyr RTOS. An external virtual GP
 
 The project uses `native_sim` to validate application logic and message flow without requiring physical peripherals.
 
+Note: Timestamp data is passed through, but does not appear in the logs.
+
 ## Threads
 
 | Thread | Priority | Responsibility |
@@ -85,14 +87,63 @@ AI assistance was particularly useful for reviewing edge cases and creating mock
 As I am more familiar with FreeRTOS, I also leveraged AI for clarifying syntax, and what the equivalent Zephyr functions are compared to FreeRTOS functions.
 
 ## Known limitations / next steps
+- Better handling of BLE historical payload requirement
+- Updated comments and documentation
+- Cleanup of configuration and includes and switching printk's to the Logging module (re-organize/remove any that were added but not needed due to changes during development.)
+
 - Thread stacks are 1 KB, which is fine on `native_sim` but needs measuring (e.g. `CONFIG_THREAD_ANALYZER`) on a Cortex-M.
 - `CONFIG_PM` is enabled but no power states are used; hardware would use PM states / deep sleep with GPIO wake.
 - Unused Kconfig options (`APP_IMU_ODR_HZ`, `APP_IMU_FIFO_WATERMARK`, `MAIN_SLEEP_MS`) are not yet wired in.
 
+The first 3 bullet points are the areas I would focus on if I had more time available.
+
 ## Sample output
 ```
-[paste ~15 lines: wakeup, motion, no-motion, inactivity, sleep, offload]
-```
+*** Booting Zephyr OS build v4.5.0-rc1-297-g653d367889f5 ***
+*** Booting Zephyr OS on native_sim ***
+[IMU] Initialized
+[Datalogger] Sleeping; waiting for wakeup
+[SIM] Triggering wakeup
+[Datalogger] Wakeup received
+[IMU] Started
+[Flash][Event] WAKEUP
+[BLE] Streaming 10 IMU samples
+[Flash][Event] MOTION_DETECTED
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[Flash][Event] NO_MOTION_DETECTED
+[IMU] Stopped
+[Datalogger] Sleeping; waiting for wakeup
+[Flash][Event] SLEEP
+[SIM] Triggering wakeup
+[Datalogger] Wakeup received
+[IMU] Started
+[Flash][Event] WAKEUP
+[BLE] Streaming 10 IMU samples
+[Flash][Event] MOTION_DETECTED
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+[BLE] Streaming 10 IMU samples
+[Flash][IMU] Stored batch (10 samples)
+Stopped at 373.670s```
 
 # Criteria
 

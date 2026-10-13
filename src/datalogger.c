@@ -54,6 +54,7 @@ static int publish_message(enum motion_msg_type type, bool motion,
 {
 	struct motion_msg msg = {
 		.type = type,
+		.timestamp_ms = k_uptime_get_32(),
 		.motion = motion,
 	};
 

@@ -17,14 +17,14 @@ int sim_init(void)
 
 void sim_wakeup_thread(void *p1, void *p2, void *p3)
 {
-	k_sleep(K_SECONDS(1));
+	k_sleep(K_SECONDS(10));
 
 	while (1) {
 		printk("[SIM] Triggering wakeup\n");
 		gpio_emul_input_set(button.port, button.pin, 0);
 		k_sleep(K_MSEC(100));
 		gpio_emul_input_set(button.port, button.pin, 1);
-		k_sleep(K_SECONDS(10));
+		k_sleep(K_MINUTES(6));
 	}
 }
 
